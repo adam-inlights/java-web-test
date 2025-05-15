@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Personalized Landing Page</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+      background: #f9f9f9;
+    }
+    .cta-button {
+      display: inline-block;
+      padding: 1rem 2rem;
+      background: #0073e6;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+      margin-top: 1rem;
+    }
+	  
+@media only screen and (max-width:480px) {
+	  .fw {
+		  width: 100% !important;
+	  }
+	  }
+  </style>
+</head>
+<body>
+
+  <h1>Welcome, {{ person.first_name|default:'default-image' }}!</h1>
+
+  <p>Thanks for clicking through, {{ person.first_name|default:'default-image' }}. We're glad you're here.</p>
+
+   <a href="https://www.nitrouscompetitions.com?name={{ person.first_name|default:'default-image' }}">
+  <img src="https://zap.img.inlights.io/ep/nitrous-comp-tap-to-win-tap/{{ person.first_name|default:'default-image' }}/tile.gif" width="700" alt="Your personalized image" style="width: 700px;" class="fw">
+	</a>
+
+  <br>
+
+  <a href="https://www.nitrouscompetitions.com/?name={{ person.first_name|default:'default-image' }}" class="cta-button">
+    Claim Your Offer, {{ person.first_name|default:'default-image' }}
+  </a>
+
+  <!-- ✅ JavaScript to personalize page -->
+  <script>
+    (function () {
+      function getQueryParams() {
+        const params = {};
+        const urlParams = new URLSearchParams(window.location.search);
+        for (const [key, value] of urlParams.entries()) {
+          params[key] = decodeURIComponent(value.replace(/\+/g, ' '));
+        }
+        return params;
+      }
+
+      function appendUTMToLinks(params) {
+        const utmParams = {};
+        for (const key in params) {
+          if (key.startsWith('utm_')) {
+            utmParams[key] = params[key];
+          }
+        }
+
+        if (Object.keys(utmParams).length === 0) return;
+
+        const links = document.querySelectorAll('a[href]');
+        links.forEach(link => {
+          const href = link.getAttribute('href');
+          if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
+          try {
+            const linkUrl = new URL(href, window.location.origin);
+            for (const key in utmParams) {
+              if (!linkUrl.searchParams.has(key)) {
+                linkUrl.searchParams.append(key, utmParams[key]);
+              }
+            }
+            link.setAttribute('href', linkUrl.toString());
+          } catch (e) {
+            console.warn('Invalid link:', href, e);
+          }
+        });
+      }
+
+      function replaceFirstnameEverywhere(firstname) {
+        if (!firstname) return;
+
+        const encoded = encodeURIComponent(firstname);
+
+        // Replace in all text nodes
+        const treeWalker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+        while (treeWalker.nextNode()) {
+          const node = treeWalker.currentNode;
+          if (node.nodeValue.includes('{{ person.first_name|default:'default-image' }}')) {
+            node.nodeValue = node.nodeValue.replaceAll('{{ person.first_name|default:'default-image' }}', firstname);
+          }
+        }
+
+        // Replace in attributes
+        const elements = document.querySelectorAll('[src*="{{ person.first_name|default:'default-image' }}"], [href*="{{ person.first_name|default:'default-image' }}"]');
+        elements.forEach(el => {
+          for (const attr of el.getAttributeNames()) {
+            const value = el.getAttribute(attr);
+            if (value && value.includes('{{ person.first_name|default:'default-image' }}')) {
+              el.setAttribute(attr, value.replaceAll('{{ person.first_name|default:'default-image' }}', encoded));
+            }
+          }
+        });
+      }
+
+      window.addEventListener('DOMContentLoaded', () => {
+        const params = getQueryParams();
+        appendUTMToLinks(params);
+        replaceFirstnameEverywhere(params.firstname);
+      });
+    })();
+  </script>
+
+</body>
+</html>
